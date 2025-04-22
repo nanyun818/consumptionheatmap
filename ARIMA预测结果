@@ -1,0 +1,66 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+# 示例数据
+data = {
+    '月份': ['2024年2月', '2024年3月', '2024年4月', '2024年5月', '2024年6月', '2024年7月', '2024年8月', '2024年9月', '2024年10月', '2024年11月', '2024年12月', '2025年2月'],
+    '社会消费品零售总额（亿元）': [1415.50, 1490.86, 1446.98, 1590.93, 1513.45, 1348.93, 1374.53, 1424.64, 1613.09, 1442.95, 1570.34, np.nan]
+}
+
+# 创建DataFrame
+df = pd.DataFrame(data)
+
+# 将月份转换为日期格式
+df['月份'] = pd.to_datetime(df['月份'], format='%Y年%m月')
+
+# 将月份设置为索引
+df.set_index('月份', inplace=True)
+
+# 选择需要建模的数据列，并处理缺失值
+ts_data = df['社会消费品零售总额（亿元）'].dropna()
+
+# 绘制ACF和PACF图，帮助确定ARIMA模型的参数
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+plot_acf(ts_data, ax=ax1)
+plot_pacf(ts_data, ax=ax2)
+plt.show()
+
+# 构建和拟合ARIMA模型
+# 这里的参数p, d, q需要根据ACF/PACF图来确定，这里仅为示例
+p, d, q = 2, 1, 2  # 示例参数
+model = ARIMA(ts_data, order=(p, d, q))
+model_fit = model.fit()
+
+# 输出模型摘要
+print(model_fit.summary())
+
+SARIMAX Results                                
+==============================================================================
+Dep. Variable:          社会消费品零售总额（亿元）   No. Observations:                   11
+Model:                 ARIMA(2, 1, 2)   Log Likelihood          -479980271.820
+Date:                Tue, 22 Apr 2025   AIC                      959960553.639
+Time:                        11:31:01   BIC                      959960555.152
+Sample:                    02-01-2024   HQIC                     959960551.980
+                         - 12-01-2024                                         
+Covariance Type:                  opg                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+ar.L1       4.096e-07   1.96e-09    208.496      0.000    4.06e-07    4.13e-07
+ar.L2      -1.572e-07   2.18e-09    -72.045      0.000   -1.61e-07   -1.53e-07
+ma.L1       4.096e-07   1.96e-09    208.488      0.000    4.06e-07    4.13e-07
+ma.L2      -1.572e-07   2.18e-09    -72.043      0.000   -1.61e-07   -1.53e-07
+sigma2         0.0002   8.13e-13   1.86e+08      0.000       0.000       0.000
+===================================================================================
+Ljung-Box (L1) (Q):                   1.96   Jarque-Bera (JB):                 0.71
+Prob(Q):                              0.16   Prob(JB):                         0.70
+Heteroskedasticity (H):               2.85   Skew:                            -0.25
+Prob(H) (two-sided):                  0.41   Kurtosis:                         1.79
+===================================================================================
+
+Warnings:
+[1] Covariance matrix calculated using the outer product of gradients (complex-step).
+[2] Covariance matrix is singular or near-singular, with condition number 9.01e+16. Standard errors may be unstable.
