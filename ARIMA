@@ -1,0 +1,57 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+# 示例数据
+data = {
+    '月份': ['2024年2月', '2024年3月', '2024年4月', '2024年5月', '2024年6月', '2024年7月', '2024年8月', '2024年9月', '2024年10月', '2024年11月', '2024年12月', '2025年2月'],
+    '社会消费品零售总额（亿元）': [1415.50, 1490.86, 1446.98, 1590.93, 1513.45, 1348.93, 1374.53, 1424.64, 1613.09, 1442.95, 1570.34, np.nan]
+}
+
+# 创建DataFrame
+df = pd.DataFrame(data)
+
+# 将月份转换为日期格式
+df['月份'] = pd.to_datetime(df['月份'], format='%Y年%m月')
+
+# 将月份设置为索引
+df.set_index('月份', inplace=True)
+
+# 选择需要建模的数据列，并处理缺失值
+ts_data = df['社会消费品零售总额（亿元）'].dropna()
+
+# 绘制ACF和PACF图，帮助确定ARIMA模型的参数
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+plot_acf(ts_data, ax=ax1)
+plot_pacf(ts_data, ax=ax2)
+plt.show()
+
+# 构建和拟合ARIMA模型
+# 这里的参数p, d, q需要根据ACF/PACF图来确定，这里仅为示例
+p, d, q = 2, 1, 2  # 示例参数
+model = ARIMA(ts_data, order=(p, d, q))
+model_fit = model.fit()
+
+# 输出模型摘要
+print(model_fit.summary())
+
+# 预测未来3个月的社会消费品零售总额
+forecast_steps = 3
+forecast = model_fit.forecast(steps=forecast_steps)
+
+# 绘制原始数据和预测结果
+plt.figure(figsize=(12, 6))
+plt.plot(ts_data, label='历史数据')
+plt.plot(pd.date_range(start=ts_data.index[-1], periods=forecast_steps + 1, closed='right')[1:], forecast, label='预测数据', color='red')
+plt.title('社会消费品零售总额预测')
+plt.xlabel('日期')
+plt.ylabel('金额（亿元）')
+plt.legend()
+plt.show()
+
+# 输出预测结果
+print("预测结果：")
+for i, value in enumerate(forecast):
+    print(f"第{i + 1}个月预测值：{value:.2f}")
