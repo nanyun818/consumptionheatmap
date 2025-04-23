@@ -1,0 +1,26 @@
+           OLS Regression Results                            
+==============================================================================
+Dep. Variable:               消费总额        R-squared:                   1.000
+Model:                        OLS          Adj. R-squared:              nan
+Method:             Least Squares          F-statistic:                 nan
+Date:              Wed, 23 Apr 2025        Prob (F-statistic):          nan
+Time:                      20:30:55        Log-Likelihood:            58.629
+No. Observations:                 2        AIC:                      -113.3
+Df Residuals:                     0        BIC:                      -115.9
+Df Model:                         1                                             
+Covariance Type:          nonrobust                                             
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+const      -1.025e-05        inf         -0        nan         nan         nan
+免签入境人次         0.0297        inf          0        nan         nan         nan
+外卡商户数          0.0018        inf          0        nan         nan         nan
+文化占比           0.0023        inf          0        nan         nan         nan
+停留天数           0.0002        inf          0        nan         nan         nan
+支付笔数           0.1613        inf          0        nan         nan         nan
+==============================================================================
+Omnibus:                    nan   Durbin-Watson:              1.800
+Prob(Omnibus):              nan   Jarque-Bera (JB):           0.333
+Skew:                       0.000   Prob(JB):                  0.846
+Kurtosis:                   1.000   Cond. No.                 537.
+==============================================================================
