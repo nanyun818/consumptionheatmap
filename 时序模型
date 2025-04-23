@@ -1,56 +1,54 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
-from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 plt.rcParams['font.sans-serif'] = ['SimHei']
-
-# Step 1：构造数据
+# 1. 数据输入
 data = {
-    'retail': [1415.50, 1490.86, 1446.98, 1590.93, 1513.45,
-               1348.93, 1374.53, 1424.64, 1613.09, 1442.95, 1570.34],
-    'growth_rate': [-6.0, -3.5, -5.5, 1.6, -9.4, -6.1, -6.8, -4.3, 10.9, -13.5, -2.7]
+    'month': [
+        '2024-02', '2024-03', '2024-04', '2024-05', '2024-06',
+        '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12'
+    ],
+    'retail': [
+        1415.50, 1490.86, 1446.98, 1590.93, 1513.45,
+        1348.93, 1374.53, 1424.64, 1613.09, 1442.95, 1570.34
+    ],
+    'growth_rate': [
+        -6.0, -3.5, -5.5, 1.6, -9.4,
+        -6.1, -6.8, -4.3, 10.9, -13.5, -2.7
+    ]
 }
-index = pd.date_range(start='2024-02-01', periods=11, freq='M')
-df = pd.DataFrame(data, index=index)
 
-# Step 2：检查零售总额的平稳性（ADF）
-adf_result = adfuller(df['retail'])
-print("ADF检验：")
-print("ADF统计量:", adf_result[0])
-print("p值:", adf_result[1])
+df = pd.DataFrame(data)
+df['month'] = pd.to_datetime(df['month'])
+df.set_index('month', inplace=True)
 
-# Step 3：差分以使数据平稳（如必要）
-df['retail_diff'] = df['retail'].diff()
-df['growth_rate_lag'] = df['growth_rate'].shift(1)  # 外生变量滞后一阶（可调整）
+# 2. 模型训练：ARIMA(1,1,0) + 外生变量
+model = SARIMAX(df['retail'], order=(1,1,0), exog=df[['growth_rate']])
+model_fit = model.fit(disp=False)
 
-# 删除NaN值
-df_model = df.dropna()
+# 3. 准备预测：2025年1月 ~ 6月的增长率估计（你可根据专家预测或用均值）
+future_growth_rate = pd.DataFrame({
+    'growth_rate': [-2.0, -1.0, 0.5, 1.0, 1.2, 1.5]  # 你也可以自己替换
+}, index=pd.date_range(start='2025-01-31', periods=6, freq='M'))
 
-# Step 4：拟合 ARIMAX 模型（主变量：零售，外生变量：增长率）
-endog = df_model['retail']
-exog = df_model[['growth_rate_lag']]
+# 4. 预测未来6个月
+forecast = model_fit.get_forecast(steps=6, exog=future_growth_rate)
+predicted = forecast.predicted_mean
 
-model = ARIMA(endog, order=(1, 1, 0), exog=exog)
-results = model.fit()
-
-print(results.summary())
-
-# Step 5：未来预测（以假设未来3个月增长率为 -1.0, 0.5, 1.2 为例）
-future_exog = pd.DataFrame({'growth_rate_lag': [-1.0, 0.5, 1.2]})
-forecast = results.forecast(steps=3, exog=future_exog)
-
-print("\n未来三个月预测的社会消费品零售总额：")
-print(forecast)
-
-# Step 6：绘图
-plt.figure(figsize=(10, 5))
-df['retail'].plot(label='实际数据')
-forecast_index = pd.date_range(start=df.index[-1] + pd.offsets.MonthEnd(1), periods=3, freq='M')
-forecast_series = pd.Series(forecast, index=forecast_index)
-forecast_series.plot(label='ARIMAX预测', color='red')
+# 5. 可视化
+plt.figure(figsize=(10,5))
+plt.plot(df.index, df['retail'], label='实际数据', color='blue')
+plt.plot(predicted.index, predicted, label='ARIMAX预测', color='red')
+plt.title('ARIMAX预测社会消费品零售总额（至2025年6月）')
+plt.xlabel('时间')
+plt.ylabel('零售额（亿元）')
 plt.legend()
 plt.grid(True)
-plt.title("ARIMAX 模型预测社会消费品零售总额")
-plt.ylabel("零售总额（亿元）")
+plt.tight_layout()
 plt.show()
+
+# 6. 输出预测值
+print("未来6个月预测零售总额：")
+print(predicted)
+
